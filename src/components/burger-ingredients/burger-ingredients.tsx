@@ -1,14 +1,18 @@
 import { useState, useRef, useEffect, FC } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { useSelector } from '../../services/store'; // 1. Импортируем useSelector из нашего стора
 
 import { TTabMode } from '@utils-types';
 import { BurgerIngredientsUI } from '../ui/burger-ingredients';
 
 export const BurgerIngredients: FC = () => {
-  /** TODO: взять переменные из стора */
-  const buns = [];
-  const mains = [];
-  const sauces = [];
+  // 2. Получаем массив всех ингредиентов из Redux Стора
+  const ingredients = useSelector((state) => state.ingredients.data);
+
+  // 3. Фильтруем ингредиенты по их категориям из полученных данных
+  const buns = ingredients.filter((item) => item.type === 'bun');
+  const mains = ingredients.filter((item) => item.type === 'main');
+  const sauces = ingredients.filter((item) => item.type === 'sauce');
 
   const [currentTab, setCurrentTab] = useState<TTabMode>('bun');
   const titleBunRef = useRef<HTMLHeadingElement>(null);
@@ -47,7 +51,7 @@ export const BurgerIngredients: FC = () => {
       titleSaucesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  return null;
+  // УБРАЛИ лишнюю строчку return null;, которая блокировала вывод на экран
 
   return (
     <BurgerIngredientsUI

@@ -5,10 +5,8 @@ import { BurgerConstructorUI } from '@ui';
 export const BurgerConstructor: FC = () => {
   /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
   const constructorItems = {
-    bun: {
-      price: 0
-    },
-    ingredients: []
+    bun: null, // Поставили null, чтобы справа появились подсказки "Выберите булки"
+    ingredients: [] // Пустой массив, чтобы появилась подсказка "Выберите начинку"
   };
 
   const orderRequest = false;
@@ -22,7 +20,7 @@ export const BurgerConstructor: FC = () => {
 
   const price = useMemo(
     () =>
-      (constructorItems.bun ? constructorItems.bun.price * 2 : 0) +
+      (constructorItems.bun ? (constructorItems.bun as any).price * 2 : 0) +
       constructorItems.ingredients.reduce(
         (s: number, v: TConstructorIngredient) => s + v.price,
         0
@@ -30,7 +28,7 @@ export const BurgerConstructor: FC = () => {
     [constructorItems]
   );
 
-  return null;
+  // УБРАЛИ лишнюю строчку return null;, которая всё блокировала
 
   return (
     <BurgerConstructorUI

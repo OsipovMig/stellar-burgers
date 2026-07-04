@@ -1,4 +1,5 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import ingredientsReducer from './slices/ingredientsSlice'; // Импортируем наш новый редюсер
 
 import {
   TypedUseSelectorHook,
@@ -6,13 +7,17 @@ import {
   useSelector as selectorHook
 } from 'react-redux';
 
-const rootReducer = () => {}; // Заменить на импорт настоящего редьюсера
+// Объединяем редюсеры (сейчас он один, дальше добавятся новые)
+const rootReducer = combineReducers({
+  ingredients: ingredientsReducer
+});
 
 const store = configureStore({
   reducer: rootReducer,
   devTools: process.env.NODE_ENV !== 'production'
 });
 
+// Исправляем тип RootState, чтобы он правильно видел структуру хранилища
 export type RootState = ReturnType<typeof rootReducer>;
 
 export type AppDispatch = typeof store.dispatch;
