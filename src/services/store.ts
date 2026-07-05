@@ -1,5 +1,6 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import ingredientsReducer from './slices/ingredientsSlice'; // Импортируем наш новый редюсер
+import ingredientsReducer from './slices/ingredientsSlice';
+import userReducer from './userSlice'; // Импортируем слайс юзера
 
 import {
   TypedUseSelectorHook,
@@ -7,9 +8,9 @@ import {
   useSelector as selectorHook
 } from 'react-redux';
 
-// Объединяем редюсеры (сейчас он один, дальше добавятся новые)
 const rootReducer = combineReducers({
-  ingredients: ingredientsReducer
+  ingredients: ingredientsReducer,
+  user: userReducer // Добавили редюсер пользователя в стор
 });
 
 const store = configureStore({
@@ -17,9 +18,7 @@ const store = configureStore({
   devTools: process.env.NODE_ENV !== 'production'
 });
 
-// Исправляем тип RootState, чтобы он правильно видел структуру хранилища
 export type RootState = ReturnType<typeof rootReducer>;
-
 export type AppDispatch = typeof store.dispatch;
 
 export const useDispatch: () => AppDispatch = () => dispatchHook();
