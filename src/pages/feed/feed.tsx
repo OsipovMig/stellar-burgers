@@ -8,7 +8,7 @@ export const Feed: FC = () => {
   const dispatch = useDispatch();
 
   // Достаем массив заказов
-  const { orders } = useSelector((state) => state.feed);
+  const { orders } = useSelector((state) => state.feeds);
 
   // Запрашиваем данные СТРОГО один раз при монтировании компонента.
   // Пустой массив зависимостей [] гарантирует, что зацикливания не произойдет!

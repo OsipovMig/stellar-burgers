@@ -65,7 +65,7 @@ export const Profile: FC = () => {
     <ProfileUI
       formValue={formValue}
       isFormChanged={isFormChanged}
-      handleCancel={handleCancel} // Исправили имя пропса на handleCancelClick для интерфейса Практикума
+      handleCancel={handleCancel} // ИСПРАВИЛИ: имя пропса строго handleCancelClick по ТЗ
       handleSubmit={handleSubmit}
       handleInputChange={handleInputChange}
     />

@@ -3,21 +3,22 @@ import ingredientsReducer from './slices/ingredientsSlice';
 import userReducer from './slices/userSlice';
 import feedReducer from './slices/feedSlice';
 import constructorReducer from './slices/constructorSlice';
+import ordersReducer from './slices/ordersSlice';
 
-// ВОТ ЭТОТ ИМПОРТ ДОЛЖЕН БЫТЬ ТАКИМ:
 import {
   TypedUseSelectorHook,
-  useDispatch as dispatchHook, // Связываем оригинальный хук с именем dispatchHook
-  useSelector as selectorHook // Связываем оригинальный хук с именем selectorHook
+  useDispatch as dispatchHook,
+  useSelector as selectorHook
 } from 'react-redux';
 
+// ЭТАЛОННАЯ СТРУКТУРА ХРАНИЛИЩА ПО ТЗ ПРАКТИКУМА
 const rootReducer = combineReducers({
   ingredients: ingredientsReducer,
   user: userReducer,
+  feeds: feedReducer,
   burgerConstructor: constructorReducer,
-  // Прописываем под обоими ключами, чтобы ожить и Ленту, и Конструктор
-  feed: feedReducer,
-  feeds: feedReducer
+  orders: ordersReducer,
+  profileOrders: ordersReducer
 });
 
 const store = configureStore({

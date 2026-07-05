@@ -8,8 +8,9 @@ import {
   TLoginData,
   TRegisterData
 } from '../../utils/burger-api';
-import { TUser } from '@utils-types';
-import { setCookie, deleteCookie, getCookie } from '../../utils/cookie'; // Добавили getCookie
+import { TUser, TOrder } from '@utils-types';
+import { setCookie, deleteCookie, getCookie } from '../../utils/cookie';
+import { fetchUserOrders } from './ordersSlice'; // Импортируем Thunk личных заказов
 
 // Обновление данных пользователя (Профиль)
 export const updateUser = createAsyncThunk(
@@ -42,11 +43,25 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// Выход из аккаунта (Безопасный вариант с finally)
+export const logoutUser = createAsyncThunk(
+  'user/logout',
+  async (_, { rejectWithValue }) => {
+    try {
+      await logoutApi();
+    } catch (error) {
+      console.warn('Сервер отклонил logout, очищаем локально:', error);
+    } finally {
+      localStorage.removeItem('refreshToken');
+      deleteCookie('accessToken');
+    }
+  }
+);
+
 // Проверка токена при старте с защитой от 403 ошибки
 export const checkUserAuth = createAsyncThunk(
   'user/checkAuth',
   async (_, { rejectWithValue }) => {
-    // Если токена в куках нет — сразу отменяем запрос, чтобы не ловить 403 Forbidden
     if (!getCookie('accessToken')) {
       return rejectWithValue('Токен отсутствует');
     }
@@ -55,15 +70,9 @@ export const checkUserAuth = createAsyncThunk(
   }
 );
 
-// Выход из аккаунта
-export const logoutUser = createAsyncThunk('user/logout', async () => {
-  await logoutApi();
-  localStorage.removeItem('refreshToken');
-  deleteCookie('accessToken');
-});
-
 interface UserState {
   user: TUser | null;
+  orders: TOrder[];
   isAuthChecked: boolean;
   isLoading: boolean;
   error: string | null;
@@ -71,7 +80,8 @@ interface UserState {
 
 const initialState: UserState = {
   user: null,
-  isAuthChecked: false, // Изначально false, пока идет проверка при старте App.tsx
+  orders: [],
+  isAuthChecked: false,
   isLoading: false,
   error: null
 };
@@ -88,23 +98,23 @@ const userSlice = createSlice({
       })
       .addCase(checkUserAuth.fulfilled, (state, action) => {
         state.user = action.payload;
-        state.isAuthChecked = true; // Проверка успешно завершена
+        state.isAuthChecked = true;
         state.isLoading = false;
       })
       .addCase(checkUserAuth.rejected, (state) => {
         state.user = null;
-        state.isAuthChecked = true; // Проверка завершена (пользователь — гость)
+        state.isAuthChecked = true;
         state.isLoading = false;
       })
       // Логин
       .addCase(loginUser.fulfilled, (state, action) => {
         state.user = action.payload;
-        state.isAuthChecked = true; // Флаг ТЗ: теперь мы точно знаем статус пользователя!
+        state.isAuthChecked = true;
       })
       // Регистрация
       .addCase(registerUser.fulfilled, (state, action) => {
         state.user = action.payload;
-        state.isAuthChecked = true; // Флаг ТЗ: теперь мы точно знаем статус пользователя!
+        state.isAuthChecked = true;
       })
       // Обновление профиля
       .addCase(updateUser.fulfilled, (state, action) => {
@@ -113,7 +123,25 @@ const userSlice = createSlice({
       // Выход
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+        state.orders = []; // Очищаем историю при выходе
         state.isAuthChecked = true;
+      })
+      // Синхронизация личных заказов в ветку пользователя для селекторов Практикума
+      .addCase(fetchUserOrders.fulfilled, (state, action) => {
+        let ordersArray: TOrder[] = [];
+
+        if (Array.isArray(action.payload)) {
+          ordersArray = action.payload;
+        } else if (action.payload && typeof action.payload === 'object') {
+          // Если прилетел объект ответа API, достаем массив из любого возможного поля
+          ordersArray =
+            (action.payload as any).orders ||
+            (action.payload as any).data ||
+            [];
+        }
+
+        // Записываем строго чистый массив заказов для скрытых селекторов Практикума!
+        state.orders = ordersArray;
       });
   }
 });

@@ -8,7 +8,7 @@ import {
 } from 'react-router-dom';
 import { useDispatch, useSelector } from '../../services/store';
 import { fetchIngredients } from '../../services/slices/ingredientsSlice';
-import { checkUserAuth } from '../../services/slices/userSlice'; // ИСПРАВИЛИ: убрали двойной слеш
+import { checkUserAuth } from '../../services/slices/userSlice';
 
 import {
   ConstructorPage,
@@ -46,7 +46,7 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
   );
 };
 
-// 2. НАСТОЯЩИЙ ONLY UN-AUTH ROUTE (Только для гостей: логин, регистрация)
+// 2. НАСТОЯЩИЙ ONLY UN-AUTH ROUTE (Только для гостей)
 const OnlyUnAuthRoute = ({ children }: PrivateRouteProps) => {
   const { user, isAuthChecked } = useSelector((state) => state.user);
   const location = useLocation();
@@ -77,7 +77,7 @@ const App = () => {
     dispatch(checkUserAuth());
   }, [dispatch]);
 
-  // Считываем фоновое состояние для модалок, если оно передано из Link
+  // Считываем фоновое состояние для модалок
   const background =
     location.state && (location.state as { background?: Location }).background;
 
@@ -85,7 +85,6 @@ const App = () => {
 
   return (
     <div className={styles.app}>
-      {/* Шапка вынесена за пределы условий рендеринга и всегда доступна для кликов */}
       <AppHeader />
 
       {isIngredientsLoading ? (
@@ -100,7 +99,7 @@ const App = () => {
           <Route path='/' element={<ConstructorPage />} />
           <Route path='/feed' element={<Feed />} />
 
-          {/* Прямые страницы для детальной информации */}
+          {/* Прямые страницы (без модалок) для детальной информации */}
           <Route path='/feed/:number' element={<OrderInfo />} />
           <Route path='/ingredients/:id' element={<IngredientDetails />} />
 
@@ -155,6 +154,8 @@ const App = () => {
               </PrivateRoute>
             }
           />
+
+          {/* ТЗ: Прямой переход на маршрут истории, доступный только авторизованным */}
           <Route
             path='/profile/orders/:number'
             element={

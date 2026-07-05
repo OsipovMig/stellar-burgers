@@ -11,7 +11,7 @@ const getOrders = (orders: TOrder[], status: string): number[] =>
 
 export const FeedInfo: FC = () => {
   // 2. Забираем реальные заказы и счетчики total / totalToday из Redux-стора
-  const { orders, total, totalToday } = useSelector((state) => state.feed);
+  const { orders, total, totalToday } = useSelector((state) => state.feeds);
 
   // Собираем объект feed в том формате, который ожидает FeedInfoUI по ТЗ
   const feed = {
