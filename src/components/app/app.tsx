@@ -8,7 +8,7 @@ import {
 } from 'react-router-dom';
 import { useDispatch, useSelector } from '../../services/store';
 import { fetchIngredients } from '../../services/slices/ingredientsSlice';
-import { checkUserAuth } from '../../services/slices/userSlice';
+import { checkUserAuth } from '../../services/slices/userSlice'; // ИСПРАВИЛИ: убрали двойной слеш
 
 import {
   ConstructorPage,
@@ -21,10 +21,8 @@ import {
   ProfileOrders,
   NotFound404
 } from '@pages';
-//import '../../index.css';
 import styles from './app.module.css';
 
-// Импортируем Modal и IngredientDetails напрямую из компонентов
 import { AppHeader, Modal, IngredientDetails, OrderInfo } from '@components';
 import { Preloader } from '@ui';
 
@@ -66,9 +64,9 @@ const OnlyUnAuthRoute = ({ children }: PrivateRouteProps) => {
 };
 
 const App = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { isLoading: isIngredientsLoading, error } = useSelector(
     (state) => state.ingredients
@@ -79,15 +77,15 @@ const App = () => {
     dispatch(checkUserAuth());
   }, [dispatch]);
 
-  // Считываем фоновое состояние роутера
+  // Считываем фоновое состояние для модалок, если оно передано из Link
   const background =
     location.state && (location.state as { background?: Location }).background;
 
-  // Возврат на предыдущую страницу при закрытии модалки
   const handleModalClose = () => navigate(-1);
 
   return (
     <div className={styles.app}>
+      {/* Шапка вынесена за пределы условий рендеринга и всегда доступна для кликов */}
       <AppHeader />
 
       {isIngredientsLoading ? (
@@ -97,22 +95,16 @@ const App = () => {
           Произошла ошибка: {error}
         </div>
       ) : (
-        /* Если открыта модалка, фиксируем основной фон на старом location (background) */
+        /* Если открыта модалка, фиксируем фон на background, иначе используем текущий location */
         <Routes location={background || location}>
           <Route path='/' element={<ConstructorPage />} />
-          <Route
-            path='/feed'
-            element={
-              <div className='text text_type_main-medium pt-10'>
-                <Feed />
-              </div>
-            }
-          />
+          <Route path='/feed' element={<Feed />} />
 
-          {/* Полноэкранные страницы при прямом переходе по ссылке */}
+          {/* Прямые страницы для детальной информации */}
           <Route path='/feed/:number' element={<OrderInfo />} />
           <Route path='/ingredients/:id' element={<IngredientDetails />} />
 
+          {/* Авторизация */}
           <Route
             path='/login'
             element={
@@ -146,6 +138,7 @@ const App = () => {
             }
           />
 
+          {/* Личный кабинет */}
           <Route
             path='/profile'
             element={
@@ -175,7 +168,7 @@ const App = () => {
         </Routes>
       )}
 
-      {/* --- СЕКЦИЯ МОДАЛЬНЫХ МАРШРУТОВ ПОВЕРХ ФОНА --- */}
+      {/* --- СЕКЦИЯ МОДАЛЬНЫХ МАРШРУТОВ ПОВЕРХ ОСНОВНОГО ФОНА ПО ТЗ --- */}
       {background && (
         <Routes>
           <Route

@@ -28,7 +28,7 @@ const initialState: FeedState = {
 };
 
 const feedSlice = createSlice({
-  name: 'feeds', // <--- ИСПРАВИЛИ НА 'feeds'
+  name: 'feed', // Вернули стандартное имя
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -39,12 +39,9 @@ const feedSlice = createSlice({
       })
       .addCase(fetchFeed.fulfilled, (state, action) => {
         state.isLoading = false;
+        const ordersArray = action.payload?.orders || [];
 
-        // Достаем массив заказов из любого возможного места в ответе API
-        const ordersArray =
-          action.payload?.orders || (action.payload as any)?.data || [];
-
-        // Заполняем абсолютно все поля для стопроцентной совместимости с UI Практикума
+        // Наполняем все поля для стопроцентной совместимости с версткой
         state.orders = ordersArray;
         state.feeds = ordersArray;
         state.data = ordersArray;

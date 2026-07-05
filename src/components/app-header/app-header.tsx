@@ -1,11 +1,12 @@
 import { FC } from 'react';
-import { useSelector } from '../../services/store'; // 1. Импортируем useSelector из нашего стора
+import { useSelector } from '../../services/store';
 import { AppHeaderUI } from '@ui';
 
 export const AppHeader: FC = () => {
-  // 2. Берем данные пользователя из Redux Стора
+  // Достаем имя пользователя из стора, если он авторизован
   const { user } = useSelector((state) => state.user);
 
-  // 3. Если пользователь авторизован, передаем его имя, иначе — пустую строку
+  // Передаем имя. Компонент AppHeaderUI от Практикума сам подтянет
+  // навигацию, используя глобальный контекст маршрутизатора!
   return <AppHeaderUI userName={user ? user.name : ''} />;
 };

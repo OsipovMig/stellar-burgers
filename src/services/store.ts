@@ -14,8 +14,10 @@ import {
 const rootReducer = combineReducers({
   ingredients: ingredientsReducer,
   user: userReducer,
-  feeds: feedReducer,
-  burgerConstructor: constructorReducer
+  burgerConstructor: constructorReducer,
+  // Прописываем под обоими ключами, чтобы ожить и Ленту, и Конструктор
+  feed: feedReducer,
+  feeds: feedReducer
 });
 
 const store = configureStore({

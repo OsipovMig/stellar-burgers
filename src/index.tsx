@@ -1,6 +1,6 @@
 import React from 'react';
 import * as ReactDOMClient from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom'; // Возвращаем BrowserRouter
+import { BrowserRouter } from 'react-router-dom'; // Возвращаем классический BrowserRouter
 import { Provider } from 'react-redux';
 import store from './services/store';
 import App from './components/app/app';
@@ -11,10 +11,8 @@ const root = ReactDOMClient.createRoot(container!);
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      {/* Передаем флаги будущих версий прямо в BrowserRouter, чтобы ссылки в UI ожили */}
-      <BrowserRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
+      {/* Оборачиваем строго в BrowserRouter, чтобы старые компоненты в @ui ожили */}
+      <BrowserRouter>
         <App />
       </BrowserRouter>
     </Provider>
