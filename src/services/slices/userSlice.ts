@@ -4,13 +4,23 @@ import {
   registerUserApi,
   getUserApi,
   logoutApi,
+  updateUserApi, // Объединили импорт здесь
   TLoginData,
   TRegisterData
-} from '../utils/burger-api';
+} from '../../utils/burger-api';
 import { TUser } from '@utils-types';
-import { setCookie, deleteCookie } from '../utils/cookie'; // Убедитесь, что deleteCookie есть у вас
+import { setCookie, deleteCookie } from '../../utils/cookie';
 
-// 1. Асинхронные запросы (Thunks)
+// Обновление данных пользователя (Профиль)
+export const updateUser = createAsyncThunk(
+  'user/update',
+  async (data: Partial<TRegisterData>) => {
+    const res = await updateUserApi(data);
+    return res.user;
+  }
+);
+
+// Регистрация
 export const registerUser = createAsyncThunk(
   'user/register',
   async (data: TRegisterData) => {
@@ -21,6 +31,7 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+// Логин
 export const loginUser = createAsyncThunk(
   'user/login',
   async (data: TLoginData) => {
@@ -31,11 +42,13 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// Проверка токена при старте
 export const checkUserAuth = createAsyncThunk('user/checkAuth', async () => {
   const res = await getUserApi();
   return res.user;
 });
 
+// Выход из аккаунта
 export const logoutUser = createAsyncThunk('user/logout', async () => {
   await logoutApi();
   localStorage.removeItem('refreshToken');
@@ -44,7 +57,7 @@ export const logoutUser = createAsyncThunk('user/logout', async () => {
 
 interface UserState {
   user: TUser | null;
-  isAuthChecked: boolean; // Флаг: проверили ли мы токен пользователя при загрузке приложения
+  isAuthChecked: boolean;
   isLoading: boolean;
   error: string | null;
 }
@@ -62,7 +75,7 @@ const userSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Проверка авторизации (при обновлении страницы)
+      // Проверка авторизации
       .addCase(checkUserAuth.pending, (state) => {
         state.isLoading = true;
       })
@@ -73,11 +86,19 @@ const userSlice = createSlice({
       })
       .addCase(checkUserAuth.rejected, (state) => {
         state.user = null;
-        state.isAuthChecked = true; // Проверку завершили (пусть и неудачно)
+        state.isAuthChecked = true;
         state.isLoading = false;
       })
       // Логин
       .addCase(loginUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      // Регистрация
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      // Обновление профиля (Добавили сохранение измененных данных в стейт)
+      .addCase(updateUser.fulfilled, (state, action) => {
         state.user = action.payload;
       })
       // Выход

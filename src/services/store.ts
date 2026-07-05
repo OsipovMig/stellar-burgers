@@ -1,16 +1,21 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import ingredientsReducer from './slices/ingredientsSlice';
-import userReducer from './userSlice'; // Импортируем слайс юзера
+import userReducer from './slices/userSlice';
+import feedReducer from './slices/feedSlice';
+import constructorReducer from './slices/constructorSlice';
 
+// ВОТ ЭТОТ ИМПОРТ ДОЛЖЕН БЫТЬ ТАКИМ:
 import {
   TypedUseSelectorHook,
-  useDispatch as dispatchHook,
-  useSelector as selectorHook
+  useDispatch as dispatchHook, // Связываем оригинальный хук с именем dispatchHook
+  useSelector as selectorHook // Связываем оригинальный хук с именем selectorHook
 } from 'react-redux';
 
 const rootReducer = combineReducers({
   ingredients: ingredientsReducer,
-  user: userReducer // Добавили редюсер пользователя в стор
+  user: userReducer,
+  feeds: feedReducer,
+  burgerConstructor: constructorReducer
 });
 
 const store = configureStore({
@@ -18,7 +23,7 @@ const store = configureStore({
   devTools: process.env.NODE_ENV !== 'production'
 });
 
-export type RootState = ReturnType<typeof rootReducer>;
+export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export const useDispatch: () => AppDispatch = () => dispatchHook();

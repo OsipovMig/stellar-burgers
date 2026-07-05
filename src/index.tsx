@@ -1,8 +1,8 @@
 import React from 'react';
 import * as ReactDOMClient from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { Provider } from 'react-redux'; // Добавили Provider
-import store from './services/store'; // Подключаем будущий стор из вашей папки services
+import { BrowserRouter } from 'react-router-dom'; // Возвращаем BrowserRouter
+import { Provider } from 'react-redux';
+import store from './services/store';
 import App from './components/app/app';
 
 const container = document.getElementById('root') as HTMLElement;
@@ -11,9 +11,10 @@ const root = ReactDOMClient.createRoot(container!);
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      {' '}
-      {/* Обернули приложение в Redux Provider */}
-      <BrowserRouter>
+      {/* Передаем флаги будущих версий прямо в BrowserRouter, чтобы ссылки в UI ожили */}
+      <BrowserRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <App />
       </BrowserRouter>
     </Provider>

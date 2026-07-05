@@ -8,7 +8,7 @@ import {
 } from 'react-router-dom';
 import { useDispatch, useSelector } from '../../services/store';
 import { fetchIngredients } from '../../services/slices/ingredientsSlice';
-import { checkUserAuth } from '../../services/userSlice'; // Импортируем проверку токена
+import { checkUserAuth } from '../../services/slices/userSlice';
 
 import {
   ConstructorPage,
@@ -21,9 +21,10 @@ import {
   ProfileOrders,
   NotFound404
 } from '@pages';
-import '../../index.css';
+//import '../../index.css';
 import styles from './app.module.css';
 
+// Импортируем Modal и IngredientDetails напрямую из компонентов
 import { AppHeader, Modal, IngredientDetails, OrderInfo } from '@components';
 import { Preloader } from '@ui';
 
@@ -37,11 +38,9 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
   const location = useLocation();
 
   if (!isAuthChecked) {
-    return <Preloader />; // Пока идет запрос проверки токена, крутим спиннер
+    return <Preloader />;
   }
 
-  // Если пользователя нет в сторе — отправляем на /login,
-  // сохраняя в state адрес страницы, куда он хотел попасть (location)
   return user ? (
     <>{children}</>
   ) : (
@@ -58,8 +57,6 @@ const OnlyUnAuthRoute = ({ children }: PrivateRouteProps) => {
     return <Preloader />;
   }
 
-  // Если пользователь УЖЕ авторизован, не пускаем его на форму логина,
-  // а возвращаем либо откуда он пришел (from), либо на главную страницу "/"
   if (user) {
     const from = (location.state as { from?: Location })?.from?.pathname || '/';
     return <Navigate to={from} replace />;
@@ -79,11 +76,14 @@ const App = () => {
 
   useEffect(() => {
     dispatch(fetchIngredients());
-    dispatch(checkUserAuth()); // 3. При первой загрузке проверяем, залогинен ли юзер
+    dispatch(checkUserAuth());
   }, [dispatch]);
 
+  // Считываем фоновое состояние роутера
   const background =
     location.state && (location.state as { background?: Location }).background;
+
+  // Возврат на предыдущую страницу при закрытии модалки
   const handleModalClose = () => navigate(-1);
 
   return (
@@ -97,10 +97,19 @@ const App = () => {
           Произошла ошибка: {error}
         </div>
       ) : (
+        /* Если открыта модалка, фиксируем основной фон на старом location (background) */
         <Routes location={background || location}>
           <Route path='/' element={<ConstructorPage />} />
-          <Route path='/feed' element={<Feed />} />
+          <Route
+            path='/feed'
+            element={
+              <div className='text text_type_main-medium pt-10'>
+                <Feed />
+              </div>
+            }
+          />
 
+          {/* Полноэкранные страницы при прямом переходе по ссылке */}
           <Route path='/feed/:number' element={<OrderInfo />} />
           <Route path='/ingredients/:id' element={<IngredientDetails />} />
 
@@ -166,7 +175,37 @@ const App = () => {
         </Routes>
       )}
 
-      {/* ... Код блока с модальными окнами {background && (...)} ниже остается без изменений ... */}
+      {/* --- СЕКЦИЯ МОДАЛЬНЫХ МАРШРУТОВ ПОВЕРХ ФОНА --- */}
+      {background && (
+        <Routes>
+          <Route
+            path='/ingredients/:id'
+            element={
+              <Modal title='Детали ингредиента' onClose={handleModalClose}>
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+          <Route
+            path='/feed/:number'
+            element={
+              <Modal title='Информация о заказе' onClose={handleModalClose}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <PrivateRoute>
+                <Modal title='Информация о заказе' onClose={handleModalClose}>
+                  <OrderInfo />
+                </Modal>
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      )}
     </div>
   );
 };

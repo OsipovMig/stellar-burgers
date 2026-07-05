@@ -1,22 +1,51 @@
 import { FC, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from '../../services/store';
 import { TConstructorIngredient } from '@utils-types';
 import { BurgerConstructorUI } from '@ui';
+import {
+  createOrder,
+  resetOrderModal,
+  removeIngredient
+} from '../../services/slices/constructorSlice'; // 1. Импортируем экшен removeIngredient
 
 export const BurgerConstructor: FC = () => {
-  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems = {
-    bun: null, // Поставили null, чтобы справа появились подсказки "Выберите булки"
-    ingredients: [] // Пустой массив, чтобы появилась подсказка "Выберите начинку"
-  };
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const orderRequest = false;
+  const { user } = useSelector((state) => state.user);
 
-  const orderModalData = null;
+  // Достаем из Redux-стора данные корзины
+  const { bun, ingredients, orderRequest, orderModalData } = useSelector(
+    (state) => state.burgerConstructor
+  );
+
+  const constructorItems = { bun, ingredients };
 
   const onOrderClick = () => {
-    if (!constructorItems.bun || orderRequest) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!bun || orderRequest) return;
+
+    const ingredientsIds = [
+      bun._id,
+      ...ingredients.map((item) => item._id),
+      bun._id
+    ];
+
+    dispatch(createOrder(ingredientsIds));
   };
-  const closeOrderModal = () => {};
+
+  const closeOrderModal = () => {
+    dispatch(resetOrderModal());
+  };
+
+  // 2. Логика удаления элемента: отправляем уникальный uuid-id начинки в Redux-стор
+  const handleCloseIngredient = (ingredient: TConstructorIngredient) => {
+    dispatch(removeIngredient(ingredient.id));
+  };
 
   const price = useMemo(
     () =>
@@ -27,8 +56,6 @@ export const BurgerConstructor: FC = () => {
       ),
     [constructorItems]
   );
-
-  // УБРАЛИ лишнюю строчку return null;, которая всё блокировала
 
   return (
     <BurgerConstructorUI
