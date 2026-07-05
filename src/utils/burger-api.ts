@@ -1,5 +1,5 @@
 import { setCookie, getCookie } from './cookie';
-import { TIngredient, TOrder, TOrdersData, TUser } from './types';
+import { TIngredient, TOrder, TUser } from './types';
 
 const URL =
   process.env.BURGER_API_URL || 'https://norma.education-services.ru/api';
@@ -92,15 +92,12 @@ export const getOrdersApi = () => {
   let token = getCookie('accessToken');
 
   if (token) {
-    // 1. Если токен уже содержит "Bearer ", убираем его, чтобы получить только чистую строку JWT
     if (token.startsWith('Bearer ')) {
       token = token.replace('Bearer ', '');
     }
-    // 2. Если из-за кук застрял закодированный %20 вариант "Bearer%20", убираем и его
     if (token.startsWith('Bearer%20')) {
       token = token.replace('Bearer%20', '');
     }
-    // 3. Формируем эталонный заголовок с одним чистым пробелом, который на 100% примет бэкенд
     token = `Bearer ${token.trim()}`;
   }
 
@@ -108,11 +105,10 @@ export const getOrdersApi = () => {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
-      authorization: token // Передаем гарантированно правильный токен
+      authorization: token
     } as HeadersInit
   }).then((data) => {
     if (data?.success) {
-      // Возвращаем строго массив, подстраховывая оба возможных формата API Яндекса
       return data.orders || data.data || [];
     }
     return Promise.reject(data);

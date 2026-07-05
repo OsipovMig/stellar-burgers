@@ -30,7 +30,6 @@ interface PrivateRouteProps {
   children: React.ReactNode;
 }
 
-// 1. НАСТОЯЩИЙ PRIVATE ROUTE (Только для залогиненных)
 const PrivateRoute = ({ children }: PrivateRouteProps) => {
   const { user, isAuthChecked } = useSelector((state) => state.user);
   const location = useLocation();
@@ -46,7 +45,6 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
   );
 };
 
-// 2. НАСТОЯЩИЙ ONLY UN-AUTH ROUTE (Только для гостей)
 const OnlyUnAuthRoute = ({ children }: PrivateRouteProps) => {
   const { user, isAuthChecked } = useSelector((state) => state.user);
   const location = useLocation();
@@ -77,7 +75,6 @@ const App = () => {
     dispatch(checkUserAuth());
   }, [dispatch]);
 
-  // Считываем фоновое состояние для модалок
   const background =
     location.state && (location.state as { background?: Location }).background;
 
@@ -94,16 +91,11 @@ const App = () => {
           Произошла ошибка: {error}
         </div>
       ) : (
-        /* Если открыта модалка, фиксируем фон на background, иначе используем текущий location */
         <Routes location={background || location}>
           <Route path='/' element={<ConstructorPage />} />
           <Route path='/feed' element={<Feed />} />
-
-          {/* Прямые страницы (без модалок) для детальной информации */}
           <Route path='/feed/:number' element={<OrderInfo />} />
           <Route path='/ingredients/:id' element={<IngredientDetails />} />
-
-          {/* Авторизация */}
           <Route
             path='/login'
             element={
@@ -137,7 +129,6 @@ const App = () => {
             }
           />
 
-          {/* Личный кабинет */}
           <Route
             path='/profile'
             element={
@@ -155,7 +146,6 @@ const App = () => {
             }
           />
 
-          {/* ТЗ: Прямой переход на маршрут истории, доступный только авторизованным */}
           <Route
             path='/profile/orders/:number'
             element={
@@ -169,7 +159,6 @@ const App = () => {
         </Routes>
       )}
 
-      {/* --- СЕКЦИЯ МОДАЛЬНЫХ МАРШРУТОВ ПОВЕРХ ОСНОВНОГО ФОНА ПО ТЗ --- */}
       {background && (
         <Routes>
           <Route

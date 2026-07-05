@@ -7,7 +7,7 @@ import {
   createOrder,
   resetOrderModal,
   removeIngredient
-} from '../../services/slices/constructorSlice'; // 1. Импортируем экшен removeIngredient
+} from '../../services/slices/constructorSlice';
 
 export const BurgerConstructor: FC = () => {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ export const BurgerConstructor: FC = () => {
 
   const { user } = useSelector((state) => state.user);
 
-  // Достаем из Redux-стора данные корзины
   const { bun, ingredients, orderRequest, orderModalData } = useSelector(
     (state) => state.burgerConstructor
   );
@@ -42,7 +41,6 @@ export const BurgerConstructor: FC = () => {
     dispatch(resetOrderModal());
   };
 
-  // 2. Логика удаления элемента: отправляем уникальный uuid-id начинки в Redux-стор
   const handleCloseIngredient = (ingredient: TConstructorIngredient) => {
     dispatch(removeIngredient(ingredient.id));
   };

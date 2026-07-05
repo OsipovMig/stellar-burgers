@@ -1,18 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getIngredientsApi } from '../../utils/burger-api';
-import { TIngredient } from '@utils-types'; // Импортируем готовый тип Практикума
+import { TIngredient } from '@utils-types';
 
-// Асинхронный Thunk для получения ингредиентов
 export const fetchIngredients = createAsyncThunk(
   'ingredients/fetch',
   async () => {
     const response = await getIngredientsApi();
-    return response; // Автоматически возвращает чистый массив TIngredient[]
+    return response;
   }
 );
 
 interface IngredientsState {
-  data: TIngredient[]; // Строго типизируем массив
+  data: TIngredient[];
   isLoading: boolean;
   error: string | null;
 }
@@ -35,7 +34,7 @@ const ingredientsSlice = createSlice({
       })
       .addCase(fetchIngredients.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.data = action.payload; // Данные сохраняются в стейт
+        state.data = action.payload;
       })
       .addCase(fetchIngredients.rejected, (state, action) => {
         state.isLoading = false;

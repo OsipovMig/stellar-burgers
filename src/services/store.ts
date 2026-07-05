@@ -11,7 +11,6 @@ import {
   useSelector as selectorHook
 } from 'react-redux';
 
-// ЭТАЛОННАЯ СТРУКТУРА ХРАНИЛИЩА ПО ТЗ ПРАКТИКУМА
 const rootReducer = combineReducers({
   ingredients: ingredientsReducer,
   user: userReducer,

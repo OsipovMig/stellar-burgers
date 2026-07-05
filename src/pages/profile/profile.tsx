@@ -1,12 +1,11 @@
 import { ProfileUI } from '@ui-pages';
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from '../../services/store'; // 1. Импортируем хуки Redux
-import { updateUser } from '../../services/slices/userSlice'; // 2. Импортируем экшен обновления
+import { useDispatch, useSelector } from '../../services/store';
+import { updateUser } from '../../services/slices/userSlice';
 
 export const Profile: FC = () => {
   const dispatch = useDispatch();
 
-  // 3. Достаем реального пользователя из Redux-хранилища
   const { user } = useSelector((state) => state.user);
 
   const [formValue, setFormValue] = useState({
@@ -15,7 +14,6 @@ export const Profile: FC = () => {
     password: ''
   });
 
-  // Синхронизируем форму, если данные пользователя в сторе изменились
   useEffect(() => {
     setFormValue((prevState) => ({
       ...prevState,
@@ -24,13 +22,11 @@ export const Profile: FC = () => {
     }));
   }, [user]);
 
-  // Проверяем, были ли изменены поля формы относительно данных в сторе
   const isFormChanged =
     formValue.name !== user?.name ||
     formValue.email !== user?.email ||
     !!formValue.password;
 
-  // 4. ТЗ: При нажатии кнопки «Сохранить» отправляется запрос с измененными данными
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
     if (!formValue.name || !formValue.email) return;
@@ -44,7 +40,6 @@ export const Profile: FC = () => {
     );
   };
 
-  // 5. ТЗ: При нажатии «Отмена» значения полей возвращаются в состояние до редактирования
   const handleCancel = (e: SyntheticEvent) => {
     e.preventDefault();
     setFormValue({
@@ -65,7 +60,7 @@ export const Profile: FC = () => {
     <ProfileUI
       formValue={formValue}
       isFormChanged={isFormChanged}
-      handleCancel={handleCancel} // ИСПРАВИЛИ: имя пропса строго handleCancelClick по ТЗ
+      handleCancel={handleCancel}
       handleSubmit={handleSubmit}
       handleInputChange={handleInputChange}
     />

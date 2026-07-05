@@ -2,15 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getOrdersApi } from '../../utils/burger-api';
 import { TOrder } from '@utils-types';
 
-// Асинхронный Thunk для получения личной истории заказов пользователя
-import { getCookie } from '../../utils/cookie'; // Импортируем утилиту чтения кук
+import { getCookie } from '../../utils/cookie';
 
 export const fetchUserOrders = createAsyncThunk(
   'orders/fetchUserOrders',
   async (_, { rejectWithValue }) => {
     const token = getCookie('accessToken');
 
-    // Если токена в куках нет — не делаем запрос к серверу, чтобы не ловить 401 Unauthorized!
     if (!token) {
       return rejectWithValue(
         'Пользователь не авторизован или токен отсутствует'
@@ -39,7 +37,7 @@ const initialState: OrdersState = {
 };
 
 const ordersSlice = createSlice({
-  name: 'orders', // Строго совпадает с ключом в combineReducers
+  name: 'orders',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -50,7 +48,7 @@ const ordersSlice = createSlice({
       })
       .addCase(fetchUserOrders.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Напрямую берем массив из payload, так как функция getOrdersApi в burger-api уже вытащила его!
+
         state.orders = action.payload || [];
       })
       .addCase(fetchUserOrders.rejected, (state, action) => {

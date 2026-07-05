@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { NavLink } from 'react-router-dom'; // 1. Импортируем NavLink для переключения страниц по ТЗ
+import { NavLink } from 'react-router-dom';
 import styles from './app-header.module.css';
 import { TAppHeaderUIProps } from './type';
 import {
@@ -13,7 +13,6 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
   <header className={styles.header}>
     <nav className={`${styles.menu} p-4`}>
       <div className={styles.menu_part_left}>
-        {/* 2. Настраиваем ссылку на Конструктор (главную страницу) */}
         <NavLink
           to='/'
           className={({ isActive }) =>
@@ -22,14 +21,13 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
         >
           {({ isActive }) => (
             <>
-              {/* Меняем тип иконки в зависимости от активности страницы */}
+              {}
               <BurgerIcon type={isActive ? 'primary' : 'secondary'} />
               <span className='ml-2 mr-10'>Конструктор</span>
             </>
           )}
         </NavLink>
 
-        {/* 3. Настраиваем ссылку на Ленту заказов */}
         <NavLink
           to='/feed'
           className={({ isActive }) =>
@@ -50,7 +48,6 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
       </div>
 
       <div className={styles.link_position_last}>
-        {/* 4. Настраиваем ссылку на Личный кабинет (Либо /profile, либо на /login если не авторизован) */}
         <NavLink
           to='/profile'
           className={({ isActive }) =>

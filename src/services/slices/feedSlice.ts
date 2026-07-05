@@ -9,8 +9,8 @@ export const fetchFeed = createAsyncThunk('feed/fetch', async () => {
 
 interface FeedState {
   orders: TOrder[];
-  feeds: TOrder[]; // Добавили ключ feeds
-  data: TOrder[]; // Добавили ключ data
+  feeds: TOrder[];
+  data: TOrder[];
   total: number;
   totalToday: number;
   isLoading: boolean;
@@ -28,7 +28,7 @@ const initialState: FeedState = {
 };
 
 const feedSlice = createSlice({
-  name: 'feed', // Вернули стандартное имя
+  name: 'feed',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -41,7 +41,6 @@ const feedSlice = createSlice({
         state.isLoading = false;
         const ordersArray = action.payload?.orders || [];
 
-        // Наполняем все поля для стопроцентной совместимости с версткой
         state.orders = ordersArray;
         state.feeds = ordersArray;
         state.data = ordersArray;

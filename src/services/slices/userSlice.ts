@@ -10,9 +10,8 @@ import {
 } from '../../utils/burger-api';
 import { TUser, TOrder } from '@utils-types';
 import { setCookie, deleteCookie, getCookie } from '../../utils/cookie';
-import { fetchUserOrders } from './ordersSlice'; // Импортируем Thunk личных заказов
+import { fetchUserOrders } from './ordersSlice';
 
-// Обновление данных пользователя (Профиль)
 export const updateUser = createAsyncThunk(
   'user/update',
   async (data: Partial<TRegisterData>) => {
@@ -21,7 +20,6 @@ export const updateUser = createAsyncThunk(
   }
 );
 
-// Регистрация
 export const registerUser = createAsyncThunk(
   'user/register',
   async (data: TRegisterData) => {
@@ -43,7 +41,6 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// Выход из аккаунта (Безопасный вариант с finally)
 export const logoutUser = createAsyncThunk(
   'user/logout',
   async (_, { rejectWithValue }) => {
@@ -58,7 +55,6 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
-// Проверка токена при старте с защитой от 403 ошибки
 export const checkUserAuth = createAsyncThunk(
   'user/checkAuth',
   async (_, { rejectWithValue }) => {
@@ -92,7 +88,6 @@ const userSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Проверка авторизации при старте приложения
       .addCase(checkUserAuth.pending, (state) => {
         state.isLoading = true;
       })
@@ -123,24 +118,21 @@ const userSlice = createSlice({
       // Выход
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
-        state.orders = []; // Очищаем историю при выходе
+        state.orders = [];
         state.isAuthChecked = true;
       })
-      // Синхронизация личных заказов в ветку пользователя для селекторов Практикума
       .addCase(fetchUserOrders.fulfilled, (state, action) => {
         let ordersArray: TOrder[] = [];
 
         if (Array.isArray(action.payload)) {
           ordersArray = action.payload;
         } else if (action.payload && typeof action.payload === 'object') {
-          // Если прилетел объект ответа API, достаем массив из любого возможного поля
           ordersArray =
             (action.payload as any).orders ||
             (action.payload as any).data ||
             [];
         }
 
-        // Записываем строго чистый массив заказов для скрытых селекторов Практикума!
         state.orders = ordersArray;
       });
   }
