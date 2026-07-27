@@ -86,7 +86,7 @@ test.describe('Интеграционные тесты страницы конс
     });
   });
 
-  // --- КОД 1 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
+  // --- КОД 1 ТЕСТА (ИСПРАВЛЕН ЛОКАТОР ДЛЯ ЖЕЛЕЗОБЕТОННОЙ ПРОВЕРКИ ИНГРЕДИЕНТА В КОРЗИНЕ) ---
   test('Должно работать добавление булок и начинок из списка в конструктор', async ({
     page
   }) => {
@@ -109,8 +109,20 @@ test.describe('Интеграционные тесты страницы конс
     await bunBtn.dispatchEvent('click');
     await mainBtn.dispatchEvent('click');
 
-    await expect(page.locator('text=(верх)')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('text=(низ)')).toBeVisible();
+    // Проверяем, что в конструкторе появились конкретная булка (верх/низ) и конкретная начинка
+    await expect(
+      page.locator('text=Краторная булка N-200i (верх)')
+    ).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.locator('text=Краторная булка N-200i (низ)')
+    ).toBeVisible();
+
+    // ИСПРАВЛЕНО: Ищем текст строго среди элементов с классом конструктора Яндекса, полностью исключая строгий режим
+    await expect(
+      page
+        .locator('.constructor-element__text')
+        .filter({ hasText: 'Филе Марсианской Макрели' })
+    ).toBeVisible();
   });
 
   // --- КОД 2 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
