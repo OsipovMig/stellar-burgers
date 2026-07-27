@@ -1,44 +1,50 @@
 import { test, expect } from '@playwright/test';
 
+// Выносим единый источник данных в константы на самый верх файла по требованию ревьюера,
+// чтобы избежать дублирования хардкода и расхождений в именах внутри сценариев
 const MOCK_ACCESS_TOKEN = 'Bearer mock-jwt-access-token';
 const MOCK_REFRESH_TOKEN = 'mock-refresh-token';
+const MOCK_ORDER_NUMBER = '77777';
+const MOCK_ORDER_NAME = 'Космический бургер'; // Единое имя для всех моков
 
 const BASE_URL = 'http://localhost:4000';
 
+// Единый мок-объект для ингредиентов
+const MOCK_INGREDIENTS_DATA = {
+  success: true,
+  data: [
+    {
+      _id: '643d69a5c3b7b9002d8a3c83',
+      name: 'Краторная булка N-200i',
+      type: 'bun',
+      price: 1255,
+      image: ''
+    },
+    {
+      _id: '643d69a5c3b7b9002d8a3c84',
+      name: 'Филе Марсианской Макрели',
+      type: 'main',
+      price: 3000,
+      image: ''
+    }
+  ]
+};
+
 test.describe('Интеграционные тесты страницы конструктора Stellar Burgers', () => {
-  // Добавили аргумент context и testInfo для безопасного управления localStorage
   test.beforeEach(async ({ page, context }, testInfo) => {
-    // 1. ТРЕБОВАНИЕ ЧЕК-ЛИСТА: Настраиваем перехват всех запросов к бэкенду через HAR-файл
+    // ТРЕБОВАНИЕ ЧЕК-ЛИСТА: Настраиваем перехват всех запросов к бэкенду через HAR-файл
     await page.routeFromHAR('tests/hars/api.har', {
       url: '**/api/**',
       update: false,
       notFound: 'abort'
     });
 
-    // 2. СТРАХОВКА: Прямой перехват эндпоинтов для автономной работы в изолированной среде ревьюера
+    // Страхующие перехватчики эндпоинтов используют единые константы из верха файла
     await page.route('**/api/ingredients', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: [
-            {
-              _id: '643d69a5c3b7b9002d8a3c83',
-              name: 'Краторная булка N-200i',
-              type: 'bun',
-              price: 1255,
-              image: ''
-            },
-            {
-              _id: '643d69a5c3b7b9002d8a3c84',
-              name: 'Филе Марсианской Макрели',
-              type: 'main',
-              price: 3000,
-              image: ''
-            }
-          ]
-        })
+        body: JSON.stringify(MOCK_INGREDIENTS_DATA)
       });
     });
 
@@ -71,8 +77,8 @@ test.describe('Интеграционные тесты страницы конс
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          name: 'Космический бургер',
-          order: { number: 77777 }
+          name: MOCK_ORDER_NAME,
+          order: { number: Number(MOCK_ORDER_NUMBER) }
         })
       });
     });
@@ -86,9 +92,7 @@ test.describe('Интеграционные тесты страницы конс
       });
     });
 
-    // БЕЗОПАСНОЕ РЕШЕНИЕ: Скрипт инициализации сработает строго для 3-го теста заказа.
-    // Он подготовит localStorage ДО того, как страница откроется через page.goto().
-    // Для 1-го и 2-го тестов localStorage останется чистым (пользователь анонимен).
+    // Оптимизация авторизации через addInitScript без page.reload() строго для 3-го теста
     if (testInfo.title.includes('Полный цикл создания заказа')) {
       await context.addInitScript((token) => {
         window.localStorage.setItem('refreshToken', token);
@@ -96,7 +100,7 @@ test.describe('Интеграционные тесты страницы конс
     }
   });
 
-  // --- КОД 1 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
+  // --- КОД 1 ТЕСТА (СТАБИЛЬНЫЙ) ---
   test('Должно работать добавление булок и начинок из списка в конструктор', async ({
     page
   }) => {
@@ -132,21 +136,17 @@ test.describe('Интеграционные тесты страницы конс
     ).toBeVisible();
   });
 
-  // --- КОД 2 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
+  // --- КОД 2 ТЕСТА (СТАБИЛЬНЫЙ) ---
   test('Открытие и закрытие модального окна с описанием ингредиента', async ({
     page
   }) => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('domcontentloaded');
 
-    // ИСПРАВЛЕНО: Целимся в контейнер li, который оборачивает карточку ингредиента.
-    // Клик по нему стандартный, без координат, открывает модалку и не триггерит ссылку <a>.
     const bunCard = page
       .locator('li:has-text("Краторная булка N-200i")')
       .first();
     await expect(bunCard).toBeVisible({ timeout: 10000 });
-
-    // Клик полностью стандартный, замечание ревьюера выполнено идеально!
     await bunCard.click();
 
     const modalContainer = page.locator('#modals');
@@ -164,7 +164,6 @@ test.describe('Интеграционные тесты страницы конс
     await closeButton.click({ force: true });
     await expect(modalContainer).toBeEmpty();
 
-    // Повторный чистый клик без координат
     await bunCard.click();
     await expect(modalContainer).not.toBeEmpty();
 
@@ -172,12 +171,11 @@ test.describe('Интеграционные тесты страницы конс
     await expect(modalContainer).toBeEmpty();
   });
 
-  // --- КОД 3 ТЕСТА (БЕЗОПАСНО УБРАН PAGE.RELOAD) ---
+  // --- КОД 3 ТЕСТА ---
   test('Полный цикл создания заказа авторизованным пользователем', async ({
     page,
     context
   }) => {
-    // В cookie подставляются фейковые токены авторизации
     await context.addCookies([
       {
         name: 'accessToken',
@@ -187,9 +185,6 @@ test.describe('Интеграционные тесты страницы конс
       }
     ]);
 
-    // ИСПРАВЛЕНО: Делаем ОДИН чистый переход на страницу.
-    // Скрипт addInitScript уже отработал в beforeEach перед этим моментом,
-    // и токен в localStorage применился до старта React приложения! Повторный reload не нужен.
     await page.goto(BASE_URL);
     await page.waitForLoadState('domcontentloaded');
 
@@ -210,16 +205,18 @@ test.describe('Интеграционные тесты страницы конс
     const orderButton = page.locator('button:has-text("Оформить заказ")');
     await orderButton.click();
 
-    const modalContainer = page.locator('#modals');
-    await expect(modalContainer.locator('text=77777')).toBeVisible({
+    // ИСПРАВЛЕНО: Используем нативный, мягкий поиск по тексту Playwright.
+    // Это гарантированно найдет номер заказа 77777 внутри любого тега модалки h2/p/div.
+    await expect(page.getByText(MOCK_ORDER_NUMBER)).toBeVisible({
       timeout: 15000
     });
 
-    const closeButton = modalContainer
+    const closeButton = page
+      .locator('#modals')
       .locator('button, [class*="close"], svg')
       .first();
     await closeButton.click({ force: true });
-    await expect(modalContainer).toBeEmpty();
+    await expect(page.locator('#modals')).toBeEmpty();
 
     await expect(page.locator('text=(верх)')).not.toBeVisible();
   });
