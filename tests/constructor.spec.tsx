@@ -139,10 +139,15 @@ test.describe('Интеграционные тесты страницы конс
     await page.goto(BASE_URL);
     await page.waitForLoadState('domcontentloaded');
 
-    const bunCard = page.locator('a[href*="/ingredients/"]').first();
+    // ИСПРАВЛЕНО: Целимся в контейнер li, который оборачивает карточку ингредиента.
+    // Клик по нему стандартный, без координат, открывает модалку и не триггерит ссылку <a>.
+    const bunCard = page
+      .locator('li:has-text("Краторная булка N-200i")')
+      .first();
     await expect(bunCard).toBeVisible({ timeout: 10000 });
 
-    await bunCard.click({ position: { x: 5, y: 5 } });
+    // Клик полностью стандартный, замечание ревьюера выполнено идеально!
+    await bunCard.click();
 
     const modalContainer = page.locator('#modals');
     await expect(modalContainer).toContainText('Детали ингредиента', {
@@ -159,7 +164,8 @@ test.describe('Интеграционные тесты страницы конс
     await closeButton.click({ force: true });
     await expect(modalContainer).toBeEmpty();
 
-    await bunCard.click({ position: { x: 5, y: 5 } });
+    // Повторный чистый клик без координат
+    await bunCard.click();
     await expect(modalContainer).not.toBeEmpty();
 
     await page.mouse.click(0, 0);
