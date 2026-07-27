@@ -2,6 +2,8 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
 
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/tests/'],
+
   moduleNameMapper: {
     '^@utils-types$': '<rootDir>/src/utils/types.ts',
     '^@components$': '<rootDir>/src/components/index.ts',

@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// Выносим единый источник данных в константы на самый верх файла по требованию ревьюера,
-// чтобы избежать дублирования хардкода и расхождений в именах внутри сценариев
 const MOCK_ACCESS_TOKEN = 'Bearer mock-jwt-access-token';
 const MOCK_REFRESH_TOKEN = 'mock-refresh-token';
 const MOCK_ORDER_NUMBER = '77777';
@@ -9,7 +7,6 @@ const MOCK_ORDER_NAME = 'Космический бургер'; // Единое �
 
 const BASE_URL = 'http://localhost:4000';
 
-// Единый мок-объект для ингредиентов
 const MOCK_INGREDIENTS_DATA = {
   success: true,
   data: [
@@ -32,14 +29,12 @@ const MOCK_INGREDIENTS_DATA = {
 
 test.describe('Интеграционные тесты страницы конструктора Stellar Burgers', () => {
   test.beforeEach(async ({ page, context }, testInfo) => {
-    // ТРЕБОВАНИЕ ЧЕК-ЛИСТА: Настраиваем перехват всех запросов к бэкенду через HAR-файл
     await page.routeFromHAR('tests/hars/api.har', {
       url: '**/api/**',
       update: false,
       notFound: 'abort'
     });
 
-    // Страхующие перехватчики эндпоинтов используют единые константы из верха файла
     await page.route('**/api/ingredients', async (route) => {
       await route.fulfill({
         status: 200,
@@ -83,7 +78,6 @@ test.describe('Интеграционные тесты страницы конс
       });
     });
 
-    // Блокируем картинки, возвращая пустую заглушку
     await page.route(/(png|jpg|jpeg|svg|webp|avif)$/, async (route) => {
       await route.fulfill({
         status: 200,
@@ -92,7 +86,6 @@ test.describe('Интеграционные тесты страницы конс
       });
     });
 
-    // Оптимизация авторизации через addInitScript без page.reload() строго для 3-го теста
     if (testInfo.title.includes('Полный цикл создания заказа')) {
       await context.addInitScript((token) => {
         window.localStorage.setItem('refreshToken', token);
@@ -100,7 +93,6 @@ test.describe('Интеграционные тесты страницы конс
     }
   });
 
-  // --- КОД 1 ТЕСТА (СТАБИЛЬНЫЙ) ---
   test('Должно работать добавление булок и начинок из списка в конструктор', async ({
     page
   }) => {
@@ -136,7 +128,6 @@ test.describe('Интеграционные тесты страницы конс
     ).toBeVisible();
   });
 
-  // --- КОД 2 ТЕСТА (СТАБИЛЬНЫЙ) ---
   test('Открытие и закрытие модального окна с описанием ингредиента', async ({
     page
   }) => {
@@ -171,7 +162,6 @@ test.describe('Интеграционные тесты страницы конс
     await expect(modalContainer).toBeEmpty();
   });
 
-  // --- КОД 3 ТЕСТА ---
   test('Полный цикл создания заказа авторизованным пользователем', async ({
     page,
     context
@@ -205,8 +195,6 @@ test.describe('Интеграционные тесты страницы конс
     const orderButton = page.locator('button:has-text("Оформить заказ")');
     await orderButton.click();
 
-    // ИСПРАВЛЕНО: Используем нативный, мягкий поиск по тексту Playwright.
-    // Это гарантированно найдет номер заказа 77777 внутри любого тега модалки h2/p/div.
     await expect(page.getByText(MOCK_ORDER_NUMBER)).toBeVisible({
       timeout: 15000
     });

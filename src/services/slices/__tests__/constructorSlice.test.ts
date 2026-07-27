@@ -36,7 +36,6 @@ const mockMain: TIngredient = {
 };
 
 describe('Тестирование burgerConstructor редьюсера', () => {
-  // ИСПРАВЛЕНО: Извлекаем подлинный начальный стейт напрямую из логики редьюсера без дублирования
   const initialState = constructorReducer(undefined, { type: 'UNKNOWN' });
 
   test('должен возвращать начальное состояние при экшене UNKNOWN', () => {
@@ -46,12 +45,10 @@ describe('Тестирование burgerConstructor редьюсера', () => 
   });
 
   test('должен добавлять и перезаписывать булку', () => {
-    // 1. Добавляем первую булку
     const action1 = addIngredient(mockBun);
     const state1 = constructorReducer(initialState, action1);
     expect(state1.bun).toEqual({ ...mockBun, id: expect.any(String) });
 
-    // 2. Создаем мок второй (новой) булки для проверки перезаписи
     const mockNewBun: TIngredient = {
       _id: 'bun-2',
       name: 'Новая космическая булка',
@@ -66,11 +63,9 @@ describe('Тестирование burgerConstructor редьюсера', () => 
       image_large: ''
     };
 
-    // 3. Добавляем вторую булку в уже изменённый стейт state1
     const action2 = addIngredient(mockNewBun);
     const state2 = constructorReducer(state1, action2);
 
-    // 4. Проверяем, что в стейте теперь лежит именно новая булка (произошла перезапись)
     expect(state2.bun).toEqual({ ...mockNewBun, id: expect.any(String) });
   });
 
