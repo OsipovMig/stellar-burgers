@@ -6,7 +6,8 @@ const MOCK_REFRESH_TOKEN = 'mock-refresh-token';
 const BASE_URL = 'http://localhost:4000';
 
 test.describe('Интеграционные тесты страницы конструктора Stellar Burgers', () => {
-  test.beforeEach(async ({ page }) => {
+  // Добавили аргумент context и testInfo для безопасного управления localStorage
+  test.beforeEach(async ({ page, context }, testInfo) => {
     // 1. ТРЕБОВАНИЕ ЧЕК-ЛИСТА: Настраиваем перехват всех запросов к бэкенду через HAR-файл
     await page.routeFromHAR('tests/hars/api.har', {
       url: '**/api/**',
@@ -84,6 +85,15 @@ test.describe('Интеграционные тесты страницы конс
         body: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
       });
     });
+
+    // БЕЗОПАСНОЕ РЕШЕНИЕ: Скрипт инициализации сработает строго для 3-го теста заказа.
+    // Он подготовит localStorage ДО того, как страница откроется через page.goto().
+    // Для 1-го и 2-го тестов localStorage останется чистым (пользователь анонимен).
+    if (testInfo.title.includes('Полный цикл создания заказа')) {
+      await context.addInitScript((token) => {
+        window.localStorage.setItem('refreshToken', token);
+      }, MOCK_REFRESH_TOKEN);
+    }
   });
 
   // --- КОД 1 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
@@ -122,7 +132,7 @@ test.describe('Интеграционные тесты страницы конс
     ).toBeVisible();
   });
 
-  // --- КОД 2 ТЕСТА (ДОБАВЛЕНА СТРОГАЯ ПРОВЕРКА НАЗВАНИЯ ИНГРЕДИЕНТА В МОДАЛКЕ) ---
+  // --- КОД 2 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
   test('Открытие и закрытие модального окна с описанием ингредиента', async ({
     page
   }) => {
@@ -139,32 +149,29 @@ test.describe('Интеграционные тесты страницы конс
       timeout: 5000
     });
 
-    // ИСПРАВЛЕНО: Теперь строго проверяем, что в модальном окне отображается название именно кликнутого ингредиента
     await expect(
       modalContainer.locator('h3', { hasText: 'Краторная булка N-200i' })
     ).toBeVisible();
 
-    // Закрытие по клику на крестик
     const closeButton = modalContainer
       .locator('button, [class*="close"], svg')
       .first();
     await closeButton.click({ force: true });
     await expect(modalContainer).toBeEmpty();
 
-    // Открываем повторно для проверки закрытия по оверлею
     await bunCard.click({ position: { x: 5, y: 5 } });
     await expect(modalContainer).not.toBeEmpty();
 
-    // Закрытие по клику на оверлей
     await page.mouse.click(0, 0);
     await expect(modalContainer).toBeEmpty();
   });
 
-  // --- КОД 3 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
+  // --- КОД 3 ТЕСТА (БЕЗОПАСНО УБРАН PAGE.RELOAD) ---
   test('Полный цикл создания заказа авторизованным пользователем', async ({
     page,
     context
   }) => {
+    // В cookie подставляются фейковые токены авторизации
     await context.addCookies([
       {
         name: 'accessToken',
@@ -174,13 +181,10 @@ test.describe('Интеграционные тесты страницы конс
       }
     ]);
 
+    // ИСПРАВЛЕНО: Делаем ОДИН чистый переход на страницу.
+    // Скрипт addInitScript уже отработал в beforeEach перед этим моментом,
+    // и токен в localStorage применился до старта React приложения! Повторный reload не нужен.
     await page.goto(BASE_URL);
-
-    await page.evaluate((token) => {
-      localStorage.setItem('refreshToken', token);
-    }, MOCK_REFRESH_TOKEN);
-
-    await page.reload();
     await page.waitForLoadState('domcontentloaded');
 
     const bunBtn = page
