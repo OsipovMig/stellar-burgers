@@ -86,7 +86,7 @@ test.describe('Интеграционные тесты страницы конс
     });
   });
 
-  // --- КОД 1 ТЕСТА (ИСПРАВЛЕН ЛОКАТОР ДЛЯ ЖЕЛЕЗОБЕТОННОЙ ПРОВЕРКИ ИНГРЕДИЕНТА В КОРЗИНЕ) ---
+  // --- КОД 1 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
   test('Должно работать добавление булок и начинок из списка в конструктор', async ({
     page
   }) => {
@@ -109,15 +109,12 @@ test.describe('Интеграционные тесты страницы конс
     await bunBtn.dispatchEvent('click');
     await mainBtn.dispatchEvent('click');
 
-    // Проверяем, что в конструкторе появились конкретная булка (верх/низ) и конкретная начинка
     await expect(
       page.locator('text=Краторная булка N-200i (верх)')
     ).toBeVisible({ timeout: 5000 });
     await expect(
       page.locator('text=Краторная булка N-200i (низ)')
     ).toBeVisible();
-
-    // ИСПРАВЛЕНО: Ищем текст строго среди элементов с классом конструктора Яндекса, полностью исключая строгий режим
     await expect(
       page
         .locator('.constructor-element__text')
@@ -125,7 +122,7 @@ test.describe('Интеграционные тесты страницы конс
     ).toBeVisible();
   });
 
-  // --- КОД 2 ТЕСТА (БЕЗ ИЗМЕНЕНИЙ) ---
+  // --- КОД 2 ТЕСТА (ДОБАВЛЕНА СТРОГАЯ ПРОВЕРКА НАЗВАНИЯ ИНГРЕДИЕНТА В МОДАЛКЕ) ---
   test('Открытие и закрытие модального окна с описанием ингредиента', async ({
     page
   }) => {
@@ -142,17 +139,23 @@ test.describe('Интеграционные тесты страницы конс
       timeout: 5000
     });
 
-    await expect(modalContainer.locator('h3').last()).not.toBeEmpty();
+    // ИСПРАВЛЕНО: Теперь строго проверяем, что в модальном окне отображается название именно кликнутого ингредиента
+    await expect(
+      modalContainer.locator('h3', { hasText: 'Краторная булка N-200i' })
+    ).toBeVisible();
 
+    // Закрытие по клику на крестик
     const closeButton = modalContainer
       .locator('button, [class*="close"], svg')
       .first();
     await closeButton.click({ force: true });
     await expect(modalContainer).toBeEmpty();
 
+    // Открываем повторно для проверки закрытия по оверлею
     await bunCard.click({ position: { x: 5, y: 5 } });
     await expect(modalContainer).not.toBeEmpty();
 
+    // Закрытие по клику на оверлей
     await page.mouse.click(0, 0);
     await expect(modalContainer).toBeEmpty();
   });
