@@ -46,10 +46,32 @@ describe('Тестирование burgerConstructor редьюсера', () => 
   });
 
   test('должен добавлять и перезаписывать булку', () => {
-    const action = addIngredient(mockBun);
-    const state = constructorReducer(initialState, action);
+    // 1. Добавляем первую булку
+    const action1 = addIngredient(mockBun);
+    const state1 = constructorReducer(initialState, action1);
+    expect(state1.bun).toEqual({ ...mockBun, id: expect.any(String) });
 
-    expect(state.bun).toEqual({ ...mockBun, id: expect.any(String) });
+    // 2. Создаем мок второй (новой) булки для проверки перезаписи
+    const mockNewBun: TIngredient = {
+      _id: 'bun-2',
+      name: 'Новая космическая булка',
+      type: 'bun',
+      proteins: 10,
+      fat: 10,
+      carbohydrates: 10,
+      calories: 100,
+      price: 500,
+      image: '',
+      image_mobile: '',
+      image_large: ''
+    };
+
+    // 3. Добавляем вторую булку в уже изменённый стейт state1
+    const action2 = addIngredient(mockNewBun);
+    const state2 = constructorReducer(state1, action2);
+
+    // 4. Проверяем, что в стейте теперь лежит именно новая булка (произошла перезапись)
+    expect(state2.bun).toEqual({ ...mockNewBun, id: expect.any(String) });
   });
 
   test('должен добавлять начинку в массив и генерировать uuid id', () => {
