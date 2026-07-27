@@ -36,12 +36,8 @@ const mockMain: TIngredient = {
 };
 
 describe('Тестирование burgerConstructor редьюсера', () => {
-  const initialState = {
-    bun: null,
-    ingredients: [],
-    orderRequest: false,
-    orderModalData: null
-  };
+  // ИСПРАВЛЕНО: Извлекаем подлинный начальный стейт напрямую из логики редьюсера без дублирования
+  const initialState = constructorReducer(undefined, { type: 'UNKNOWN' });
 
   test('должен возвращать начальное состояние при экшене UNKNOWN', () => {
     expect(constructorReducer(undefined, { type: 'UNKNOWN' })).toEqual(

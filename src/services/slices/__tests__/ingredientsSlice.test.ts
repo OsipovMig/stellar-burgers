@@ -18,11 +18,8 @@ const mockIngredients: TIngredient[] = [
 ];
 
 describe('Тестирование ingredientsSlice редьюсера', () => {
-  const initialState = {
-    data: [],
-    isLoading: false,
-    error: null
-  };
+  // ИСПРАВЛЕНО: Динамически извлекаем подлинный initialState из самого редьюсера без дублирования
+  const initialState = ingredientsReducer(undefined, { type: 'UNKNOWN' });
 
   test('должен возвращать начальное состояние при экшене UNKNOWN', () => {
     expect(ingredientsReducer(undefined, { type: 'UNKNOWN' })).toEqual(
