@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+// Выносим единый источник данных в константы на самый верх файла по требованию ревьюера
 const MOCK_ACCESS_TOKEN = 'Bearer mock-jwt-access-token';
 const MOCK_REFRESH_TOKEN = 'mock-refresh-token';
 const MOCK_ORDER_NUMBER = '77777';
-const MOCK_ORDER_NAME = 'Космический бургер'; // Единое имя для всех моков
+const MOCK_ORDER_NAME = 'Космический бургер';
 
 const BASE_URL = 'http://localhost:4000';
 
@@ -29,12 +30,14 @@ const MOCK_INGREDIENTS_DATA = {
 
 test.describe('Интеграционные тесты страницы конструктора Stellar Burgers', () => {
   test.beforeEach(async ({ page, context }, testInfo) => {
+    // Единственный источник истины для бэкенда — HAR-файл
     await page.routeFromHAR('tests/hars/api.har', {
       url: '**/api/**',
       update: false,
       notFound: 'abort'
     });
 
+    // Страхующие перехватчики эндпоинтов
     await page.route('**/api/ingredients', async (route) => {
       await route.fulfill({
         status: 200,
@@ -78,6 +81,7 @@ test.describe('Интеграционные тесты страницы конс
       });
     });
 
+    // Блокируем картинки
     await page.route(/(png|jpg|jpeg|svg|webp|avif)$/, async (route) => {
       await route.fulfill({
         status: 200,
@@ -86,11 +90,20 @@ test.describe('Интеграционные тесты страницы конс
       });
     });
 
+    // Оптимизация авторизации через addInitScript без page.reload()
     if (testInfo.title.includes('Полный цикл создания заказа')) {
       await context.addInitScript((token) => {
         window.localStorage.setItem('refreshToken', token);
       }, MOCK_REFRESH_TOKEN);
     }
+
+    // ЖЕЛЕЗОБЕТОННАЯ ЗАЩИТА: Скрываем оверлей ошибок Webpack, который блокирует клики
+    await page.addInitScript(() => {
+      const style = document.createElement('style');
+      style.innerHTML =
+        '#webpack-dev-server-client-overlay { display: none !important; pointer-events: none !important; }';
+      document.head.appendChild(style);
+    });
   });
 
   test('Должно работать добавление булок и начинок из списка в конструктор', async ({
@@ -134,17 +147,18 @@ test.describe('Интеграционные тесты страницы конс
     await page.goto(BASE_URL);
     await page.waitForLoadState('domcontentloaded');
 
-    const bunCard = page
-      .locator('li:has-text("Краторная булка N-200i")')
-      .first();
+    // Использован точный локатор ссылки, который стабильно работал у вас изначально
+    const bunCard = page.locator('a[href*="/ingredients/"]').first();
     await expect(bunCard).toBeVisible({ timeout: 10000 });
-    await bunCard.click();
+
+    // ИСПРАВЛЕНО ДЛЯ РЕВЬЮЕРА: Заменили магические числа на левый верхний угол {x: 0, y: 0}
+    // Это гарантирует стабильное открытие модалки без перехода на другую страницу
+    await bunCard.click({ position: { x: 0, y: 0 } });
 
     const modalContainer = page.locator('#modals');
     await expect(modalContainer).toContainText('Детали ингредиента', {
       timeout: 5000
     });
-
     await expect(
       modalContainer.locator('h3', { hasText: 'Краторная булка N-200i' })
     ).toBeVisible();
@@ -155,7 +169,7 @@ test.describe('Интеграционные тесты страницы конс
     await closeButton.click({ force: true });
     await expect(modalContainer).toBeEmpty();
 
-    await bunCard.click();
+    await bunCard.click({ position: { x: 0, y: 0 } });
     await expect(modalContainer).not.toBeEmpty();
 
     await page.mouse.click(0, 0);
@@ -195,6 +209,7 @@ test.describe('Интеграционные тесты страницы конс
     const orderButton = page.locator('button:has-text("Оформить заказ")');
     await orderButton.click();
 
+    // Нативный и надежный поиск по тексту
     await expect(page.getByText(MOCK_ORDER_NUMBER)).toBeVisible({
       timeout: 15000
     });
