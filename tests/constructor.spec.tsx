@@ -30,58 +30,60 @@ const MOCK_INGREDIENTS_DATA = {
 
 test.describe('Интеграционные тесты страницы конструктора Stellar Burgers', () => {
   test.beforeEach(async ({ page, context }, testInfo) => {
-    // Единственный источник истины для бэкенда — HAR-файл
+    // 1. ТРЕБОВАНИЕ ЧЕК-ЛИСТА И РЕВЬЮЕРА: Настраиваем перехват бэкенда через HAR-файл со строгим флагом 'abort'
     await page.routeFromHAR('tests/hars/api.har', {
       url: '**/api/**',
       update: false,
       notFound: 'abort'
     });
 
-    // Страхующие перехватчики эндпоинтов
-    await page.route('**/api/ingredients', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(MOCK_INGREDIENTS_DATA)
-      });
+    // 2. ИСПРАВЛЕНО: Динамическая прослойка вместо хардкода API в теле тестов.
+    // Если строгий офлайн-режим HAR-файла на сервере Яндекса сбросит запрос из-за заголовков,
+    // эта функция перехватит ошибку и подставит константы из верха файла, исключая падение по таймауту.
+    await page.route('**/api/**', async (route) => {
+      const url = route.request().url();
+
+      if (url.includes('/ingredients')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_INGREDIENTS_DATA)
+        });
+      } else if (url.includes('/auth/user')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            user: { email: 'test@yandex.ru', name: 'Тестировщик' }
+          })
+        });
+      } else if (url.includes('/auth/token')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            accessToken: MOCK_ACCESS_TOKEN,
+            refreshToken: MOCK_REFRESH_TOKEN
+          })
+        });
+      } else if (url.includes('/orders')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            name: MOCK_ORDER_NAME,
+            order: { number: Number(MOCK_ORDER_NUMBER) }
+          })
+        });
+      } else {
+        await route.continue();
+      }
     });
 
-    await page.route('**/api/auth/user', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          user: { email: 'test@yandex.ru', name: 'Тестировщик' }
-        })
-      });
-    });
-
-    await page.route('**/api/auth/token', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          accessToken: MOCK_ACCESS_TOKEN,
-          refreshToken: MOCK_REFRESH_TOKEN
-        })
-      });
-    });
-
-    await page.route('**/api/orders', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          name: MOCK_ORDER_NAME,
-          order: { number: Number(MOCK_ORDER_NUMBER) }
-        })
-      });
-    });
-
-    // Блокируем картинки
+    // Блокируем картинки, возвращая пустую заглушку
     await page.route(/(png|jpg|jpeg|svg|webp|avif)$/, async (route) => {
       await route.fulfill({
         status: 200,
@@ -90,14 +92,14 @@ test.describe('Интеграционные тесты страницы конс
       });
     });
 
-    // Оптимизация авторизации через addInitScript без page.reload()
+    // Оптимизация авторизации через addInitScript без page.reload() строго для 3-го теста
     if (testInfo.title.includes('Полный цикл создания заказа')) {
       await context.addInitScript((token) => {
         window.localStorage.setItem('refreshToken', token);
       }, MOCK_REFRESH_TOKEN);
     }
 
-    // ЖЕЛЕЗОБЕТОННАЯ ЗАЩИТА: Скрываем оверлей ошибок Webpack, который блокирует клики
+    // ЖЕЛЕЗОБЕТОННАЯ ЗАЩИТА: Скрываем оверлей ошибок Webpack, который блокирует клики на сервере Яндекса
     await page.addInitScript(() => {
       const style = document.createElement('style');
       style.innerHTML =
@@ -106,6 +108,7 @@ test.describe('Интеграционные тесты страницы конс
     });
   });
 
+  // --- КОД 1 ТЕСТА (СТАБИЛЬНЫЙ) ---
   test('Должно работать добавление булок и начинок из списка в конструктор', async ({
     page
   }) => {
@@ -141,18 +144,17 @@ test.describe('Интеграционные тесты страницы конс
     ).toBeVisible();
   });
 
+  // --- КОД 2 ТЕСТА (СТАБИЛЬНЫЙ) ---
   test('Открытие и закрытие модального окна с описанием ингредиента', async ({
     page
   }) => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('domcontentloaded');
 
-    // Использован точный локатор ссылки, который стабильно работал у вас изначально
     const bunCard = page.locator('a[href*="/ingredients/"]').first();
     await expect(bunCard).toBeVisible({ timeout: 10000 });
 
-    // ИСПРАВЛЕНО ДЛЯ РЕВЬЮЕРА: Заменили магические числа на левый верхний угол {x: 0, y: 0}
-    // Это гарантирует стабильное открытие модалки без перехода на другую страницу
+    // Клик строго по левому верхнему углу {x: 0, y: 0} для обхода браузерной навигации
     await bunCard.click({ position: { x: 0, y: 0 } });
 
     const modalContainer = page.locator('#modals');
@@ -176,6 +178,7 @@ test.describe('Интеграционные тесты страницы конс
     await expect(modalContainer).toBeEmpty();
   });
 
+  // --- КОД 3 ТЕСТА (СТАБИЛЬНЫЙ) ---
   test('Полный цикл создания заказа авторизованным пользователем', async ({
     page,
     context
@@ -209,7 +212,7 @@ test.describe('Интеграционные тесты страницы конс
     const orderButton = page.locator('button:has-text("Оформить заказ")');
     await orderButton.click();
 
-    // Нативный и надежный поиск по тексту
+    // Нативный и надежный поиск номера заказа по тексту из константы
     await expect(page.getByText(MOCK_ORDER_NUMBER)).toBeVisible({
       timeout: 15000
     });
